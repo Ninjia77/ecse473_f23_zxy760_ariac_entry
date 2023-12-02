@@ -6,10 +6,16 @@
 #include "osrf_gear/LogicalCameraImage.h"
 #include "osrf_gear/GetMaterialLocations.h"
 #include "osrf_gear/Model.h"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "geometry_msgs/TransformStamped.h"
+
 
 std::vector<osrf_gear::Order> order_vector;
-std::vector<osrf_gear::Model> mater_type;
-std::string test;
+std::vector<osrf_gear::LogicalCameraImage> mater_type;
+int sum=0;
+
 void OrderCallback(const osrf_gear::Order::ConstPtr& msg)
 {
     order_vector.push_back(*msg);
@@ -19,9 +25,8 @@ void OrderCallback(const osrf_gear::Order::ConstPtr& msg)
 
 void bincamCallback(const osrf_gear::LogicalCameraImage::ConstPtr& msg)
 {
-    if(mater_type.empty())mater_type=msg->models;
-    test=mater_type[0].type;
-    ROS_INFO("mater_type[0] %s",mater_type[0].type.c_str());
+    mater_type.push_back(*msg);
+    sum++;
 }
 
 int main(int argc, char **argv)
@@ -42,35 +47,81 @@ int main(int argc, char **argv)
     ros::Subscriber order_sub = nh.subscribe<osrf_gear::Order>("/ariac/orders", 10,OrderCallback);
     ros::Subscriber camera_bin_sub = nh.subscribe<osrf_gear::LogicalCameraImage>("/ariac/logical_camera_1", 10,bincamCallback);
 
-
-   
-    int begin_serv_call_succeeded,mater_loc_call_succeeded;
+    int begin_serv_call_succeeded;
     begin_serv_call_succeeded = begin_client.call(begin_comp);
    
-
     if(begin_comp.response.success)
     {
         ROS_INFO("Competition service called successfully: %s", begin_comp.response.message.c_str());
     } 
     else 
     {
-        ROS_ERROR("Competition service call failed! Goodness Gracious!!");
+        ROS_ERROR("Competition service call failed!");
         ROS_WARN("Competition service returned failure: %s", begin_comp.response.message.c_str());
     }
-
-    getloc.request.material_type=test;
-    mater_loc_call_succeeded = mater_loc_client.call(getloc);
-    
+ 
     order_vector.clear();
     ros::Rate loop_rate(10);
-    
-    int count=0;
+
+    tf2_ros::Buffer tfBuffer;
+    tf2_ros::TransformListener tfListener(tfBuffer);
+    geometry_msgs::TransformStamped tfStamped;
+    geometry_msgs::PoseStamped part_pose, goal_pose;
     while(ros::ok)
     {
         ros::spinOnce();
+        ROS_INFO("SIZE%d",sum);
+        if(!mater_type.empty())
+        {
+            getloc.request.material_type=mater_type[sum-1].models[0].type;
+            mater_loc_client.call(getloc);
+
+            try 
+            {
+                tfStamped = tfBuffer.lookupTransform("arm1_base_link", "bin4_frame",ros::Time(0.0), ros::Duration(1.0));
+                ROS_DEBUG("Transform to [%s] from [%s]", tfStamped.header.frame_id.c_str(),
+                tfStamped.child_frame_id.c_str());
+            }
+            catch (tf2::TransformException &ex) {
+                ROS_ERROR("%s", ex.what());
+            }
+            //part_pose.pose = mater_type[sum-1].models[0].pose;
+            goal_pose.pose.position.z += 0.10; 
+            goal_pose.pose.orientation.w = 0.707;
+            goal_pose.pose.orientation.x = 0.0;
+            goal_pose.pose.orientation.y = 0.707;
+            goal_pose.pose.orientation.z = 0.0;
+
+            tf2::doTransform(part_pose, goal_pose, tfStamped);
+
+            ROS_INFO("service type %s", getloc.response.storage_units[0].unit_id.c_str());
+            ROS_WARN("part_pose");
+            ROS_WARN("parr");
+        }
         loop_rate.sleep();
-        if(count>10) break;
-        count++;
+    }
+    return 0;
+}
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
     }
     return 0;
 }
