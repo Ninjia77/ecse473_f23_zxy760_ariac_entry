@@ -114,12 +114,12 @@ int main(int argc, char **argv)
             goal_pose.pose.orientation.z = 0.0;
             ROS_INFO("service type %s", getloc.response.storage_units.back().unit_id.c_str());
             ROS_INFO("test");
-            //T_des[0][3] = goal_pose.pose.position.x;
-            //T_des[1][3] = goal_pose.pose.position.y;
-            //T_des[2][3] = goal_pose.pose.position.z;
-            T_des[0][3] = 0.5;
+            T_des[0][3] = goal_pose.pose.position.x;
+            T_des[1][3] = goal_pose.pose.position.y;
+            T_des[2][3] = goal_pose.pose.position.z;
+            /*T_des[0][3] = 0.5;
             T_des[1][3] = 0;
-            T_des[2][3] = 0;
+            T_des[2][3] = 0;*/
             ROS_INFO("XYZ%f,%f,%f",T_des[0][3],T_des[1][3],T_des[2][3]);
             T_des[3][3] = 1.0;
 
