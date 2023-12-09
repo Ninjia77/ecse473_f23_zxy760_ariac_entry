@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   ecse_373_ariac
   roscpp
   rviz
+  ik_service
 )
 
 ## System dependencies are found with CMake's conventions
@@ -39,8 +40,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
 ##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * add "message_runtime" and every package in MSG_DEP_SET to
-##     catkin_package(CATKIN_DEPENDS ...)
+##   * add "message_runtime" and every package in MSG_DEP_SET to     catkin_package(CATKIN_DEPENDS   ecse_373_ariac roscpp rviz ik_service)
 ##   * uncomment the add_*_files sections below as needed
 ##     and list every .msg/.srv/.action file to be processed
 ##   * uncomment the generate_messages entry below
